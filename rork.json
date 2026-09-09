@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "name": "Stillness",
+      "path": "ios-stillness",
+      "framework": "swift"
+    }
+  ],
+  "$schema": "https://rork.com/schema/rork.json"
+}
