@@ -1,10 +1,15 @@
 {
+  "$schema": "https://rork.com/schema/rork.json",
   "apps": [
     {
       "name": "Stillness",
       "path": "ios-stillness",
       "framework": "swift"
+    },
+    {
+      "name": "STILLNESS",
+      "path": "web-stillness",
+      "framework": "web"
     }
-  ],
-  "$schema": "https://rork.com/schema/rork.json"
+  ]
 }
