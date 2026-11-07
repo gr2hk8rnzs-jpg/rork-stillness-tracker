@@ -1,79 +1,92 @@
 /**
- * Plays the 16-bit victory fanfare. iPhone Safari only allows audio after a
- * user gesture, so the AudioContext is unlocked on the first tap/drag and the
- * sound is pre-decoded; the fanfare can then fire when the bar fills mid-drag.
+ * Plays the 16-bit victory fanfare.
+ *
+ * iPhone Safari rules this works around:
+ * - Audio may only start inside a real tap ("touchend"/"click"/"keydown");
+ *   "pointerdown"/"touchstart" do NOT count. So the audio element is unlocked
+ *   with a muted play() on the first real tap, after which it can be played
+ *   programmatically (e.g. when the bar fills mid-drag).
+ * - Web Audio is muted by the ring/silent switch, but an <audio> element is
+ *   not, so we use a plain HTMLAudioElement.
+ * - If the bar fills before audio is unlocked (very first drag), the fanfare
+ *   is queued and plays the instant the finger lifts.
  */
 const SOUND_URL = "/sounds/victory.wav";
+const PENDING_WINDOW_MS = 4000;
+const UNLOCK_EVENTS: (keyof WindowEventMap)[] = ["touchend", "click", "keydown"];
 
-type AudioContextCtor = typeof AudioContext;
+let audio: HTMLAudioElement | null = null;
+let unlocked = false;
+let pendingSince: number | null = null;
 
-let context: AudioContext | null = null;
-let buffer: AudioBuffer | null = null;
-let loading: Promise<void> | null = null;
-
-function getContext(): AudioContext | null {
-  if (context) return context;
-  const Ctor: AudioContextCtor | undefined =
-    window.AudioContext ??
-    (window as unknown as { webkitAudioContext?: AudioContextCtor }).webkitAudioContext;
-  if (!Ctor) return null;
-  context = new Ctor();
-  return context;
+function getAudio(): HTMLAudioElement | null {
+  if (audio) return audio;
+  if (typeof Audio === "undefined") return null;
+  audio = new Audio(SOUND_URL);
+  audio.preload = "auto";
+  audio.setAttribute("playsinline", "");
+  audio.volume = 0.9;
+  return audio;
 }
 
-function load(ctx: AudioContext): Promise<void> {
-  if (buffer) return Promise.resolve();
-  if (!loading) {
-    loading = fetch(SOUND_URL)
-      .then((response) => response.arrayBuffer())
-      .then((data) => ctx.decodeAudioData(data))
-      .then((decoded) => {
-        buffer = decoded;
-      })
-      .catch(() => {
-        console.warn("Stillness: victory sound could not be loaded");
-        loading = null;
-      });
+function startPlayback(element: HTMLAudioElement): Promise<void> {
+  element.muted = false;
+  element.currentTime = 0;
+  return element.play();
+}
+
+function handleGesture(): void {
+  const element = getAudio();
+  if (!element) return;
+
+  // The goal was hit before audio was allowed: play it now, inside the tap.
+  if (pendingSince !== null && Date.now() - pendingSince < PENDING_WINDOW_MS) {
+    pendingSince = null;
+    startPlayback(element)
+      .then(markUnlocked)
+      .catch(() => console.warn("Stillness: victory sound blocked"));
+    return;
   }
-  return loading;
+  pendingSince = null;
+  if (unlocked) return;
+
+  // Silent unlock: play muted, then rewind, so later play() calls are allowed.
+  element.muted = true;
+  element
+    .play()
+    .then(() => {
+      element.pause();
+      element.currentTime = 0;
+      element.muted = false;
+      markUnlocked();
+    })
+    .catch(() => {
+      element.muted = false;
+    });
 }
 
-function unlock(): void {
-  const ctx = getContext();
-  if (!ctx) return;
-  if (ctx.state === "suspended") void ctx.resume();
-  // A silent blip fully unlocks audio output on iOS Safari.
-  const silent = ctx.createBuffer(1, 1, 22_050);
-  const source = ctx.createBufferSource();
-  source.buffer = silent;
-  source.connect(ctx.destination);
-  source.start(0);
-  void load(ctx);
+function markUnlocked(): void {
+  unlocked = true;
 }
 
-/** Registers one-time gesture listeners that unlock audio. Call once at startup. */
+/** Registers gesture listeners that unlock audio. Call once at startup. */
 export function primeVictorySound(): void {
-  const events: (keyof WindowEventMap)[] = ["pointerdown", "touchend", "keydown"];
-  const handler = (): void => {
-    unlock();
-    events.forEach((name) => window.removeEventListener(name, handler, true));
-  };
-  events.forEach((name) => window.addEventListener(name, handler, true));
+  // Listeners stay registered (they're cheap) so a queued fanfare can always
+  // be released on the next tap, even after unlocking.
+  UNLOCK_EVENTS.forEach((name) => window.addEventListener(name, handleGesture, true));
 }
 
-/** Plays the fanfare once (no-op if audio is unavailable). */
+/** Plays the fanfare once; if the browser isn't ready yet, plays on next tap. */
 export function playVictorySound(): void {
-  const ctx = getContext();
-  if (!ctx) return;
-  if (ctx.state === "suspended") void ctx.resume();
-  void load(ctx).then(() => {
-    if (!buffer) return;
-    const source = ctx.createBufferSource();
-    const gain = ctx.createGain();
-    gain.gain.value = 0.9;
-    source.buffer = buffer;
-    source.connect(gain);
-    gain.connect(ctx.destination);
-    source.start(0);
-  });
+  const element = getAudio();
+  if (!element) return;
+  startPlayback(element)
+    .then(() => {
+      markUnlocked();
+      pendingSince = null;
+    })
+    .catch(() => {
+      // Not unlocked yet — queue it for the moment the finger lifts.
+      pendingSince = Date.now();
+    });
 }
