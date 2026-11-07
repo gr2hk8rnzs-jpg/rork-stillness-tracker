@@ -52,7 +52,14 @@ struct TrackerView: View {
         .padding(.horizontal, 16)
         .padding(.top, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(PixelTheme.canvas)
+        .background(
+            // Tapping empty canvas closes the goal keyboard.
+            PixelTheme.canvas.onTapGesture {
+                UIApplication.shared.sendAction(
+                    #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+                )
+            }
+        )
         .overlay {
             if isCelebrating {
                 CelebrationOverlay(onClose: endCelebration)
@@ -128,6 +135,7 @@ struct TrackerView: View {
         dismissTask?.cancel()
         isCelebrating = true
         Haptics.victory()
+        VictorySound.shared.play()
         dismissTask = Task {
             try? await Task.sleep(for: .seconds(10))
             guard !Task.isCancelled else { return }

@@ -87,14 +87,19 @@ export const Celebration = memo(function Celebration({ onClose }: CelebrationPro
         </div>
       ))}
 
+      {/* Centering lives on its own layer so the pop/throb transforms can't override it. */}
       <div
-        className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2"
-        style={{ animation: "pixel-pop 0.45s ease-out both" }}
+        className="absolute inset-x-0 top-0 flex h-[88%] items-center justify-center px-3"
         role="status"
       >
-        <div style={{ animation: "pixel-throb 0.84s ease-in-out infinite" }}>
-          <Plaque letters="YOU" rotate={-3} />
-          <Plaque letters="DID IT!" rotate={2} className="-mt-[6px]" />
+        <div style={{ animation: "pixel-pop 0.45s ease-out both" }}>
+          <div
+            className="flex flex-col items-center"
+            style={{ animation: "pixel-throb 0.84s ease-in-out infinite" }}
+          >
+            <Plaque letters="YOU" rotate={-3} />
+            <Plaque letters="DID IT!" rotate={2} className="-mt-[6px]" />
+          </div>
         </div>
       </div>
 
@@ -139,7 +144,7 @@ function Plaque({ letters, rotate, className }: PlaqueProps) {
               key={index}
               className="font-display leading-none"
               style={{
-                fontSize: 34,
+                fontSize: "min(34px, 8vw)",
                 color: letterColor(index),
                 textShadow: [
                   "-2px -2px 0 var(--pixel-ink)",

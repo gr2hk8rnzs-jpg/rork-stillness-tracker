@@ -65,8 +65,11 @@ struct CelebrationOverlay: View {
                         )
                 }
 
-                banner
-                    .position(x: geometry.size.width / 2, y: geometry.size.height * 0.44)
+                // Letter size adapts so the widest plaque always fits, centered.
+                banner(letterSize: min(44, max(24, (geometry.size.width - 72) / 7.2)))
+                    .fixedSize()
+                    .frame(width: geometry.size.width, height: geometry.size.height * 0.88)
+                    .frame(maxHeight: .infinity, alignment: .top)
             }
             .overlay(alignment: .topLeading) {
                 closeButton
@@ -80,11 +83,11 @@ struct CelebrationOverlay: View {
         }
     }
 
-    private var banner: some View {
+    private func banner(letterSize: CGFloat) -> some View {
         VStack(spacing: -6) {
-            plaque(letters: "YOU", size: 44)
+            plaque(letters: "YOU", size: letterSize)
                 .rotationEffect(.degrees(-3))
-            plaque(letters: "DID IT!", size: 44)
+            plaque(letters: "DID IT!", size: letterSize)
                 .rotationEffect(.degrees(2))
         }
         .scaleEffect(isPopped ? 1 : 0.3)

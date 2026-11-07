@@ -8,6 +8,7 @@ import { GoalField } from "@/components/stillness/GoalField";
 import { HealthBar } from "@/components/stillness/HealthBar";
 import { MinuteSlider } from "@/components/stillness/MinuteSlider";
 import { useStillness } from "@/lib/stillness/store";
+import { playVictorySound } from "@/lib/stillness/victorySound";
 import { isComplete, progressOf } from "@/lib/stillness/types";
 
 /**
@@ -26,6 +27,7 @@ export default function Index() {
   const startCelebration = useCallback(() => {
     if (dismissTimer.current) window.clearTimeout(dismissTimer.current);
     setIsCelebrating(true);
+    playVictorySound();
     dismissTimer.current = window.setTimeout(() => setIsCelebrating(false), 10_000);
   }, []);
 
