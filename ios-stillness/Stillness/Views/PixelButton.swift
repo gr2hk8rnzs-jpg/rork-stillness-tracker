@@ -7,12 +7,12 @@ import SwiftUI
 
 /// Primary arcade button: red plate, black pixel border and a hard offset
 /// shadow that collapses on press like a physical console button.
+/// Always rendered at full colour, per the design contract.
 struct PixelButton: View {
     let title: String
     var tint: Color = PixelTheme.blood
     var textColor: Color = PixelTheme.canvas
     var fontSize: CGFloat = 20
-    var isEnabled: Bool = true
     let action: () -> Void
 
     @State private var isPressed: Bool = false
@@ -22,10 +22,10 @@ struct PixelButton: View {
             Text(title)
                 .font(PixelFont.display(fontSize))
                 .tracking(1)
-                .foregroundStyle(isEnabled ? textColor : PixelTheme.steel)
+                .foregroundStyle(textColor)
                 .frame(maxWidth: .infinity)
                 .frame(height: 62)
-                .background(isEnabled ? tint : PixelTheme.surface)
+                .background(tint)
                 .pixelFrame()
                 .offset(y: isPressed ? PixelTheme.dropOffset : 0)
                 .background(alignment: .bottom) {
@@ -36,12 +36,11 @@ struct PixelButton: View {
                 }
         }
         .buttonStyle(.plain)
-        .disabled(!isEnabled)
         .padding(.bottom, PixelTheme.dropOffset)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
-                    guard isEnabled, !isPressed else { return }
+                    guard !isPressed else { return }
                     isPressed = true
                 }
                 .onEnded { _ in isPressed = false }
@@ -69,7 +68,7 @@ struct PixelChipLabel: View {
 #Preview {
     VStack(spacing: 20) {
         PixelButton(title: "LOG SESSION") {}
-        PixelButton(title: "BACK", isEnabled: false) {}
+        PixelButton(title: "BACK") {}
         PixelChipLabel(title: "QUEST LOG")
     }
     .padding()

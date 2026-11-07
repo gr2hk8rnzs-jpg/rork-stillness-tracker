@@ -93,7 +93,6 @@ export default function Index() {
 
         <PixelButton
           title={justLogged ? "SAVED!" : "LOG SESSION"}
-          disabled={today.minutes <= 0}
           onClick={handleLog}
         />
 

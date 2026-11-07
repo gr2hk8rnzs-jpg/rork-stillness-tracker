@@ -45,7 +45,7 @@ struct TrackerView: View {
             }
             .frame(maxHeight: .infinity)
 
-            PixelButton(title: justLogged ? "SAVED!" : "LOG SESSION", isEnabled: record.minutes > 0) {
+            PixelButton(title: justLogged ? "SAVED!" : "LOG SESSION") {
                 logSession()
             }
         }

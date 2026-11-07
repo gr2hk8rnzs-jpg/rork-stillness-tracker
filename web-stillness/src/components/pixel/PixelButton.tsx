@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 interface PixelButtonProps {
   title: string;
   onClick: () => void;
-  disabled?: boolean;
   /** Plate colour; defaults to the blood-red hero accent. */
   tone?: "blood" | "canvas";
   className?: string;
@@ -16,7 +15,6 @@ interface PixelButtonProps {
 export const PixelButton = memo(function PixelButton({
   title,
   onClick,
-  disabled = false,
   tone = "blood",
   className,
 }: PixelButtonProps) {
@@ -33,11 +31,9 @@ export const PixelButton = memo(function PixelButton({
       <button
         type="button"
         onClick={onClick}
-        disabled={disabled}
         className={cn(
           "relative w-full font-display text-[18px] uppercase leading-none transition-transform duration-75",
           "px-4 py-[18px] active:translate-x-[6px] active:translate-y-[6px]",
-          disabled && "opacity-40",
         )}
         style={{ background: "var(--pixel-ink)", clipPath: steppedClipPath(6), color: ink }}
       >
