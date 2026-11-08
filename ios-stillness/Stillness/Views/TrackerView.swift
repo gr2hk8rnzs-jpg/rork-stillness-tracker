@@ -135,7 +135,6 @@ struct TrackerView: View {
         dismissTask?.cancel()
         isCelebrating = true
         Haptics.victory()
-        VictorySound.shared.play()
         dismissTask = Task {
             try? await Task.sleep(for: .seconds(10))
             guard !Task.isCancelled else { return }
